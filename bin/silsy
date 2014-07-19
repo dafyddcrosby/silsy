@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+# Copyright 2014 David T. Crosby (dave@dafyddcrosby.com)
+# All rights reserved
+
+require 'optparse'
+require 'ostruct'
+require 'active_record'
+require 'yaml'
+require 'pathname'
+require 'date'
+require 'silsy'
+
+module Silsy
+  def show_list(days)
+    # TODO
+  end
+
+  def add_person(name, freq)
+    person = Person.new do |p|
+      p.name = options.name
+      p.freq = options.freq
+    end
+    person.save
+  end
+
+  def update_person(id)
+    # TODO
+  end
+
+  def show_person(id)
+    person = Person.find_by(id: options.id)
+    puts person
+  end
+  options = OpenStruct.new
+  options.days = 14
+  options.debug = false
+  usage = nil
+  options.action = nil
+  OptionParser.new do |opts|
+    opts.banner = "Usage: silsy [options]"
+
+    opts.separator "Options:"
+    opts.on("-s", "--show", Integer, "Show who should be contacted") do |days|
+      options.days = days
+      options.action = :show
+    end
+
+    opts.on("-u ID", Integer, "Update person") do |id|
+      options.id = id
+      options.action = :update
+    end
+
+    opts.separator "Adding a person:"
+    opts.on("-a NAME", String, "Add a person") do |name|
+      options.name = name
+      options.action = :add
+    end
+    opts.on("-d DAYS", Integer, "Day frequency (default 14)") do |days|
+      options.days = days
+    end
+
+    opts.separator "Other:"
+    opts.on_tail("-v", "--version", "Silsy version") do
+      puts Silsy::VERSION
+      exit
+    end
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+    usage = opts
+  end.parse!
+
+  unless options.action
+    puts usage
+    exit
+  end
+
+  silsy_db_path = File.join(Dir.home, '.silsy', 'silsy.db')
+
+  ActiveRecord::Base.establish_connection(
+    :adapter => 'sqlite3',
+    :database => silsy_db_path.to_s
+  )
+  ActiveRecord::Base.logger = Logger.new(STDERR) if options.debug
+
+  if !File.exist?(silsy_db_path)
+    ActiveRecord::Migrator.migrate('db/migrate')
+  end
+
+  case options.action
+  when :show
+    people = Person.where(["date(last_contact, '+'||freq||' days') < date('now')"]).to_a
+    if people.size > 0
+      p people
+    else
+      "No one right now"
+    end
+  when :update
+    person = Person.find_by(id: options.id)
+    person.last_contact = DateTime.now
+    person.save
+    p person
+  when :add
+    person = Person.new do |p|
+      p.name = options.name
+      p.freq = options.days
+      p.last_contact = DateTime.now
+    end
+    person.save
+  end
+
+end
