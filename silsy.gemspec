@@ -8,9 +8,9 @@ Gem::Specification.new do |gem|
   gem.email = 'dave@dafyddcrosby.com'
   gem.homepage = 'http://dafyddcrosby.com'
   gem.license = 'bsd'
-  gem.files = `git ls-files`.split($\)
   gem.executables = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.require_paths = ['lib']
+  gem.files = File.read("Manifest.txt").split
   gem.version = Silsy::VERSION
   gem.required_ruby_version = '>= 1.9'
   gem.add_dependency 'sqlite3'

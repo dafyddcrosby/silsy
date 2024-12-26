@@ -1,0 +1,9 @@
+Gemfile
+LICENSE
+Rakefile
+bin/silsy
+db/migrate/001_initial.rb
+lib/silsy.rb
+lib/silsy/person.rb
+lib/silsy/version.rb
+silsy.gemspec
